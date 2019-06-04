@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>4.0.0</Version>
+    <Authors>Joel Christner</Authors>
+    <Company>Joel Christner</Company>
+    <Product>uscale Loadbalancer</Product>
+    <Description>HTTP loadbalancer in C#</Description>
+    <Copyright>(c)2019 Joel Christner</Copyright>
+    <PackageProjectUrl>https://github.com/jchristn/uscale</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jchristn/uscale</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>loadbalancer rest http https load balancer scale scalability high availability</PackageTags>
+    <PackageReleaseNotes>Refactor, retarget to .NET Core and .NET Framework</PackageReleaseNotes>
+    <PackageId>uscale</PackageId>
+    <PackageLicenseUrl>https://github.com/jchristn/uscale/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/jchristn/uscale/master/assets/mu.ico</PackageIconUrl>
+    <AssemblyName>uscale</AssemblyName>
+    <RootNamespace>uscale</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RestWrapper" Version="2.0.2" />
+    <PackageReference Include="SyslogLogging" Version="1.0.10" />
+    <PackageReference Include="Watson" Version="2.0.2" />
+  </ItemGroup>
+
+</Project>
