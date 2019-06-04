@@ -1,9 +1,12 @@
 # uScale Loadbalancer
+```
                            __
     __  ________________ _/ /__ 
    / / / / ___/ ___/ __ `/ / _ \
   / /_/ (__  ) /__/ /_/ / /  __/
   \__,_/____/\___/\__,_/_/\___/ 
+
+```
 
 The uScale loadbalancer is a simple high-availability loadbalancer written in C# using Watson and can be used with any HTTP/HTTPS application.
 
