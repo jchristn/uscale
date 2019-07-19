@@ -214,14 +214,14 @@ namespace Uscale
 
                 if (String.IsNullOrEmpty(hostKey))
                 {
-                    _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler no host header supplied for " + req.SourceIp + ":" + req.SourceIp + " " + req.Method + " " + req.RawUrlWithoutQuery);
+                    _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler no host header supplied for " + req.SourceIp + ":" + req.SourcePort + " " + req.Method + " " + req.RawUrlWithoutQuery);
                     resp = new HttpResponse(req, 400, null, "application/json", Encoding.UTF8.GetBytes("No host header supplied"));
                     return resp;
                 }
 
                 if (!_Hosts.SelectNodeForHost(hostKey, out currHost, out currNode))
                 {
-                    _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler host or node not found for " + req.SourceIp + ":" + req.SourceIp + " " + req.Method + " " + req.RawUrlWithoutQuery);
+                    _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler host or node not found for " + req.SourceIp + ":" + req.SourcePort + " " + req.Method + " " + req.RawUrlWithoutQuery);
                     resp = new HttpResponse(req, 400, null, "application/json", Encoding.UTF8.GetBytes("Host or node not found"));
                     return resp;
                 }
@@ -229,14 +229,14 @@ namespace Uscale
                 {
                     if (currHost == null || currHost == default(Host))
                     {
-                        _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler host not found for " + req.SourceIp + ":" + req.SourceIp + " " + req.Method + " " + req.RawUrlWithoutQuery);
+                        _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler host not found for " + req.SourceIp + ":" + req.SourcePort + " " + req.Method + " " + req.RawUrlWithoutQuery);
                         resp = new HttpResponse(req, 400, null, "application/json", Encoding.UTF8.GetBytes("Host not found"));
                         return resp;
                     }
 
                     if (currNode == null || currNode == default(Node))
                     {
-                        _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler node not found for " + req.SourceIp + ":" + req.SourceIp + " " + req.Method + " " + req.RawUrlWithoutQuery);
+                        _Logging.Log(LoggingModule.Severity.Warn, "RequestHandler node not found for " + req.SourceIp + ":" + req.SourcePort + " " + req.Method + " " + req.RawUrlWithoutQuery);
                         resp = new HttpResponse(req, 400, null, "application/json", Encoding.UTF8.GetBytes("No node found for host"));
                         return resp;
                     }
@@ -248,7 +248,7 @@ namespace Uscale
 
                 #region Process-Connection
 
-                if (currHost.HandlingMode == HandlingMode.Redirect)
+                if (currHost.HandlingMode == HandlingMode.Proxy)
                 {
                     #region Redirect
                      
@@ -303,7 +303,7 @@ namespace Uscale
 
                     #endregion
                 }
-                else if (currHost.HandlingMode == HandlingMode.Proxy)
+                else if (currHost.HandlingMode == HandlingMode.Redirect)
                 {
                     #region Proxy
 

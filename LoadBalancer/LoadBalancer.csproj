@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.0.0</Version>
+    <Version>4.0.1</Version>
     <Authors>Joel Christner</Authors>
     <Company>Joel Christner</Company>
     <Product>uscale Loadbalancer</Product>
@@ -14,7 +14,7 @@
     <RepositoryUrl>https://github.com/jchristn/uscale</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>loadbalancer rest http https load balancer scale scalability high availability</PackageTags>
-    <PackageReleaseNotes>Refactor, retarget to .NET Core and .NET Framework</PackageReleaseNotes>
+    <PackageReleaseNotes>Bugfixes</PackageReleaseNotes>
     <PackageId>uscale</PackageId>
     <PackageLicenseUrl>https://github.com/jchristn/uscale/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/uscale/master/assets/mu.ico</PackageIconUrl>
