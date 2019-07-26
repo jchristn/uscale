@@ -287,7 +287,25 @@ namespace Uscale
 
                     restReq.IgnoreCertificateErrors = _Settings.Rest.AcceptInvalidCerts;
 
-                    RestResponse restResp = restReq.Send();
+                    RestResponse restResp = null;
+
+                    if (method == RestWrapper.HttpMethod.GET 
+                        || method == RestWrapper.HttpMethod.HEAD)
+                    {
+                        restResp = restReq.Send();
+                    }
+                    else if (req.Data != null && req.Data.Length > 0)
+                    {
+                        restResp = restReq.Send(req.Data);
+                    }
+                    else if (req.DataStream != null && req.ContentLength > 0)
+                    {
+                        restResp = restReq.Send(req.DataStream, req.ContentLength);
+                    }
+                    else
+                    {
+                        restResp = restReq.Send();
+                    } 
 
                     if (restResp == null)
                     {
