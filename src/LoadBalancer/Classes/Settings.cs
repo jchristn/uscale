@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System.Collections.Generic;
+    using WatsonWebserver.Core;
+
     /// <summary>
     /// Loadbalancer settings.
     /// </summary>
@@ -13,42 +13,42 @@ namespace Uscale.Classes
         /// <summary>
         /// Enable or disable the console.
         /// </summary>
-        public bool EnableConsole;
+        public bool EnableConsole { get; set; } = true;
 
         /// <summary>
         /// Status code to use while redirecting HTTP requests.
         /// </summary>
-        public int RedirectStatusCode;
+        public int RedirectStatusCode { get; set; } = 302;
 
         /// <summary>
         /// Status code text string to use while redirecting HTTP requests.
         /// </summary>
-        public string RedirectStatusString;
+        public string RedirectStatusString { get; set; } = "Found";
 
         /// <summary>
         /// List of virtual Hosts accessible through the loadbalancer.
         /// </summary>
-        public List<Host> Hosts;
+        public List<Host> Hosts { get; set; } = new List<Host>();
 
         /// <summary>
         /// Server settings.
         /// </summary>
-        public SettingsServer Server;
+        public SettingsServer Server { get; set; } = new SettingsServer();
 
         /// <summary>
         /// Authentication settings.
         /// </summary>
-        public SettingsAuth Auth;
+        public SettingsAuth Auth { get; set; } = new SettingsAuth();
 
         /// <summary>
         /// Logging settings.
         /// </summary>
-        public SettingsLogging Logging;
+        public SettingsLogging Logging { get; set; } = new SettingsLogging();
 
         /// <summary>
         /// REST settings.
         /// </summary>
-        public SettingsRest Rest;
+        public SettingsRest Rest { get; set; } = new SettingsRest();
 
         #endregion
 
@@ -71,13 +71,18 @@ namespace Uscale.Classes
         #region Public-Methods
 
         /// <summary>
-        /// Load settings from file.
+        /// Create an instance of WebserverSettings from Settings.
         /// </summary>
-        /// <param name="filename">Filename and path.</param>
-        /// <returns>Server settings.</returns>
-        public static Settings FromFile(string filename)
+        /// <returns></returns>
+        public WebserverSettings ToWebserverSettings()
         {
-            return Common.DeserializeJson<Settings>(Common.ReadTextFile(filename));
+            WebserverSettings ret = new WebserverSettings();
+
+            ret.Hostname = Server.DnsHostname;
+            ret.Port = Server.Port;
+            ret.Ssl.Enable = Server.Ssl;
+
+            return ret;
         }
 
         #endregion
@@ -86,7 +91,7 @@ namespace Uscale.Classes
 
         #endregion
     }
-    
+
     /// <summary>
     /// Server settings.
     /// </summary>
@@ -97,17 +102,17 @@ namespace Uscale.Classes
         /// <summary>
         /// Hostname on which the loadbalancer is listening.
         /// </summary>
-        public string DnsHostname;
+        public string DnsHostname { get; set; } = null;
 
         /// <summary>
         /// TCP port number on which the loadbalancer is listening.
         /// </summary>
-        public int Port;
+        public int Port { get; set; } = 0;
 
         /// <summary>
         /// Enable or disable SSL.
         /// </summary>
-        public bool Ssl;
+        public bool Ssl { get; set; } = false;
         
         #endregion
     }
@@ -122,12 +127,12 @@ namespace Uscale.Classes
         /// <summary>
         /// API key header for admin APIs.
         /// </summary>
-        public string AdminApiKeyHeader;
+        public string AdminApiKeyHeader { get; set; } = "x-api-key";
 
         /// <summary>
         /// Admin API key.
         /// </summary>
-        public string AdminApiKey;
+        public string AdminApiKey { get; set; } = "uscaleadmin";
 
         #endregion
     }
@@ -142,32 +147,32 @@ namespace Uscale.Classes
         /// <summary>
         /// IP address of the syslog server.
         /// </summary>
-        public string SyslogServerIp;
+        public string SyslogServerIp { get; set; } = "127.0.0.1";
 
         /// <summary>
         /// Port number of the syslog server.
         /// </summary>
-        public int SyslogServerPort;
+        public int SyslogServerPort { get; set; } = 514;
 
         /// <summary>
         /// Minimum severity level required to send a log message.
         /// </summary>
-        public int MinimumSeverityLevel;
+        public int MinimumSeverityLevel { get; set; } = 0;
 
         /// <summary>
         /// Enable or disable logging of incoming requests.
         /// </summary>
-        public bool LogRequests;
+        public bool LogRequests { get; set; } = false;
 
         /// <summary>
         /// Enable or disable logging of outgoing responses.
         /// </summary>
-        public bool LogResponses;
+        public bool LogResponses { get; set; } = false;
 
         /// <summary>
         /// Enable or disable console logging.
         /// </summary>
-        public bool ConsoleLogging;
+        public bool ConsoleLogging { get; set; } = false;
 
         #endregion
     }
@@ -182,17 +187,17 @@ namespace Uscale.Classes
         /// <summary>
         /// Enable or disable use of a web proxy for outgoing requests.
         /// </summary>
-        public bool UseWebProxy;
+        public bool UseWebProxy { get; set; } = false;
 
         /// <summary>
         /// Accept SSL certificates that cannot be validated.
         /// </summary>
-        public bool AcceptInvalidCerts;
+        public bool AcceptInvalidCerts { get; set; } = true;
 
         /// <summary>
         /// URL for the web proxy.
         /// </summary>
-        public string WebProxyUrl;
+        public string WebProxyUrl { get; set; } = "";
 
         #endregion
     }

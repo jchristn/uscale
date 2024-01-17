@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SyslogLogging;
-using RestWrapper;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using GetSomeInput;
+
     /// <summary>
     /// Console manager.
     /// </summary>
@@ -19,11 +16,10 @@ namespace Uscale.Classes
 
         #region Private-Members
 
-        private bool _Enabled { get; set; }
-        private Settings _Settings { get; set; }
-        private ConnectionManager _Connections { get; set; }
-        private HostManager _Hosts { get; set; }
-        private Func<bool> _ExitDelegate;
+        private Settings _Settings { get; set; } = null;
+        private ContextManager _Connections { get; set; } = null;
+        private HostManager _Hosts { get; set; } = null;
+        private Func<bool> _ExitDelegate = null;
 
         #endregion
 
@@ -38,7 +34,7 @@ namespace Uscale.Classes
         /// <param name="exitApplication">Function to call when exiting the application.</param>
         public ConsoleManager(
             Settings settings,
-            ConnectionManager conn,
+            ContextManager conn,
             HostManager hosts,
             Func<bool> exitApplication)
         {
@@ -47,7 +43,6 @@ namespace Uscale.Classes
             if (hosts == null) throw new ArgumentNullException(nameof(hosts));
             if (exitApplication == null) throw new ArgumentNullException(nameof(exitApplication));
 
-            _Enabled = true;
             _Settings = settings;
             _Connections = conn;
             _Hosts = hosts;
@@ -60,26 +55,15 @@ namespace Uscale.Classes
 
         #region Public-Methods
 
-        /// <summary>
-        /// Stop the console manager.
-        /// </summary>
-        public void Stop()
-        {
-            _Enabled = false;
-            return;
-        }
-
         #endregion
 
         #region Private-Methods
 
         private void ConsoleWorker()
         {
-            string userInput = "";
-            while (_Enabled)
+            while (_Settings.EnableConsole)
             {
-                Console.Write("Command (? for help) > ");
-                userInput = Console.ReadLine();
+                string userInput = Inputty.GetString("Command [?/help]:", null, false);
 
                 if (userInput == null) continue;
                 switch (userInput.ToLower().Trim())
@@ -96,15 +80,15 @@ namespace Uscale.Classes
 
                     case "q":
                     case "quit":
-                        _Enabled = false;
+                        _Settings.EnableConsole = false;
                         _ExitDelegate();
                         break;
 
-                    case "list_hosts":
+                    case "hosts":
                         ListHosts();
                         break;
 
-                    case "list_connections":
+                    case "conns":
                         ListConnections();
                         break;
 
@@ -117,12 +101,13 @@ namespace Uscale.Classes
 
         private void Menu()
         {
-            Console.WriteLine(Common.Line(79, "-"));
+            Console.WriteLine("");
+            Console.WriteLine("Available commands:");
             Console.WriteLine("  ?                         help / this menu");
             Console.WriteLine("  cls / c                   clear the console");
             Console.WriteLine("  quit / q                  exit the application");
-            Console.WriteLine("  list_hosts                list the monitored hosts");
-            Console.WriteLine("  list_connections          list active connections");
+            Console.WriteLine("  hosts                     list the monitored hosts");
+            Console.WriteLine("  conns                     list active connections");
             Console.WriteLine("");
             return;
         }
@@ -166,7 +151,7 @@ namespace Uscale.Classes
                             Console.WriteLine("      - Last success: " + currNode.LastSuccess);
                             Console.WriteLine("      - Last failure: " + currNode.LastFailure);
                             Console.WriteLine("      - " + currNode.NumFailures + " failures / " + currNode.MaxFailures + " max");
-                            Console.WriteLine("      - " + (Common.IsTrue(currNode.Failed) ? "**Failed**" : "Healthy"));
+                            Console.WriteLine("      - " + (currNode.Failed ? "**Failed**" : "Healthy"));
                         }
                     }
                     else

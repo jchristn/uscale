@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+
     /// <summary>
     /// Node that can service requests made to a virtual Host.
     /// </summary>
@@ -13,57 +12,62 @@ namespace Uscale.Classes
         /// <summary>
         /// Node's hostname.
         /// </summary>
-        public string Hostname { get; set; }
+        public string Hostname { get; set; } = null;
 
         /// <summary>
         /// The port on which the node is listening.
         /// </summary>
-        public int Port { get; set; }
+        public int Port { get; set; } = 0;
 
         /// <summary>
         /// Enable or disable SSL.
         /// </summary>
-        public bool Ssl { get; set; }
+        public bool Ssl { get; set; } = false;
 
         /// <summary>
         /// Heartbeat URL that the loadbalancer should poll to determine whether or not the Node is online.
         /// </summary>
-        public string HeartbeatUrl { get; set; }
+        public string HeartbeatUrl { get; set; } = null;
 
         /// <summary>
         /// The interval in milliseconds by which the loadbalancer should poll the Node.
         /// </summary>
-        public int PollingIntervalMsec { get; set; }
+        public int PollingIntervalMsec { get; set; } = 5000;
 
         /// <summary>
         /// Timestamp for the last attempt made by the loadbalancer to inquire against the Node.
         /// </summary>
-        public DateTime? LastAttempt { get; set; }
+        public DateTime? LastAttempt { get; set; } = null;
 
         /// <summary>
         /// Timestamp for the last successful attempt made by the loadbalancer inquiring against the Node.
         /// </summary>
-        public DateTime? LastSuccess { get; set; }
+        public DateTime? LastSuccess { get; set; } = null;
 
         /// <summary>
         /// Timestamp for the last failed attempt made by the loadbalancer inquiring against the Node.
         /// </summary>
-        public DateTime? LastFailure { get; set; }
+        public DateTime? LastFailure { get; set; } = null;
 
         /// <summary>
         /// Maximum number of failures tolerated before the Node is removed from rotation for this Host.
         /// </summary>
-        public int MaxFailures { get; set; }
+        public int MaxFailures { get; set; } = 5;
 
         /// <summary>
         /// Number of failures that have been encountered consecutively without a successful inquiry.
         /// </summary>
-        public int? NumFailures { get; set; }
+        public int NumFailures { get; set; } = 0;
 
         /// <summary>
         /// Indicates if the Node is marked as failed.
         /// </summary>
-        public bool Failed { get; set; }
+        public bool Failed { get; set; } = false;
+
+        /// <summary>
+        /// Enable or disable debug logging for this node.
+        /// </summary>
+        public bool Debug { get; set; } = false;
 
         #endregion
 

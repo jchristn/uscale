@@ -36,7 +36,7 @@ Run the app with ```setup``` in the command line arguments to run the setup scri
  
 ## Performance and Scale
 
-It is recommended that you use ```redirect``` for ```HandlingMode``` as this will unburden uscale from having to proxy each connection.
+It is recommended that you use ```Redirect``` for ```HandlingMode``` as this will unburden uscale from having to proxy each connection.
 
 ## Sample Configuration
 
@@ -112,17 +112,4 @@ Using the admin API key, a set of RESTful APIs can be used to gather visibility 
 GET /_loadbalancer/config?x-api-key=admin
 GET /_loadbalancer/connections?x-api-key=admin
 GET /_loadbalancer/hosts?x-api-key=admin
-```
-
-## Multiplatform Support
-
-uscale supports both .NET Framework as well as .NET Core.  .NET Core is recommended for cross-platform deployments.
-
-uscale works well in Mono environments to the extent that we have tested it. It is recommended that when running under Mono, you execute the containing EXE using --server and after using the Mono Ahead-of-Time Compiler (AOT).
-
-NOTE: Windows accepts '0.0.0.0' and '+' as an IP address representing any interface.  On Mac and Linux with Mono you must supply a specific IP address ('127.0.0.1' is also acceptable, but '0.0.0.0' is NOT).
-
-```
-mono --aot=nrgctx-trampolines=8096,nimt-trampolines=8096,ntrampolines=4048 --server uscale.exe
-mono --server uscale.exe
 ```

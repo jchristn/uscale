@@ -1,8 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+    using GetSomeInput;
+    using SerializationHelper;
+
     /// <summary>
     /// Setup class for the Loadbalancer.
     /// </summary>
@@ -38,7 +42,7 @@ namespace Uscale.Classes
         { 
             #region Variables
 
-            DateTime ts = DateTime.Now;
+            DateTime ts = DateTime.UtcNow;
             Settings ret = new Settings();
 
             #endregion
@@ -66,7 +70,6 @@ namespace Uscale.Classes
             Console.WriteLine("");
             Console.WriteLine("Press ENTER to get started.");
             Console.WriteLine("");
-            Console.WriteLine(Common.Line(79, "-"));
             Console.ReadLine();
 
             #endregion
@@ -83,8 +86,13 @@ namespace Uscale.Classes
 
             ret.Server = new SettingsServer();
             ret.Server.Ssl = false;
-            ret.Server.Port = Common.InputInteger("On which TCP port shall this node listen?", 9000, true, false);
-            ret.Server.DnsHostname = Common.InputString("On which hostname shall this node listen [+ for all]?", "+", false);
+            ret.Server.Port = Inputty.GetInteger("On which TCP port shall this node listen?", 9000, true, false);
+
+            Console.WriteLine("");
+            Console.WriteLine("For the listener hostname, if you use * or 0.0.0.0, you will need to");
+            Console.WriteLine("run uscale with administrative privileges.");
+            Console.WriteLine("");
+            ret.Server.DnsHostname = Inputty.GetString("On which hostname shall this node listen [* for all]?", "*", false);
 
             Console.WriteLine("This node is configured to use HTTP (not HTTPS) and is accessible at:");
             Console.WriteLine("");
@@ -95,39 +103,6 @@ namespace Uscale.Classes
             Console.WriteLine("use SSL to maximize security and set the correct hostname.");
             Console.WriteLine("");
 
-            #endregion
-
-            #region Auth
-
-            ret.Auth = new SettingsAuth();
-            ret.Auth.AdminApiKeyHeader = "x-api-key";
-            ret.Auth.AdminApiKey = "admin";
-
-            #endregion
-
-            #region Syslog
-
-            ret.Logging = new SettingsLogging();
-            ret.Logging.ConsoleLogging = true;
-            ret.Logging.SyslogServerIp = "127.0.0.1";
-            ret.Logging.SyslogServerPort = 514;
-            ret.Logging.LogRequests = false;
-            ret.Logging.LogResponses = false;
-            ret.Logging.MinimumSeverityLevel = 1;
-
-            #endregion
-            
-            #region REST
-
-            ret.Rest = new SettingsRest();
-            ret.Rest.AcceptInvalidCerts = true;
-            ret.Rest.UseWebProxy = false;
-            ret.Rest.WebProxyUrl = "";
-
-            #endregion
-
-            #region Hosts
-
             ret.Hosts = InputHosts();
 
             #endregion
@@ -136,26 +111,18 @@ namespace Uscale.Classes
 
             #region System-Config
 
-            if (Common.FileExists("System.json"))
+            if (File.Exists(Constants.SystemSettingsFile))
             {
                 Console.WriteLine("System configuration file already exists.");
-                if (Common.InputBoolean("Do you wish to overwrite this file?", true))
+                if (Inputty.GetBoolean("Do you wish to overwrite this file?", true))
                 {
-                    Common.DeleteFile("System.json");
-                    if (!Common.WriteFile("System.json", Common.SerializeJson(ret), false))
-                    {
-                        Common.ExitApplication("Setup", "Unable to write System.json", -1);
-                        return;
-                    }
+                    File.Delete(Constants.SystemSettingsFile);
+                    File.WriteAllBytes(Constants.SystemSettingsFile, Encoding.UTF8.GetBytes(Serializer.SerializeJson(ret, true)));
                 }
             }
             else
             {
-                if (!Common.WriteFile("System.json", Common.SerializeJson(ret), false))
-                {
-                    Common.ExitApplication("Setup", "Unable to write System.json", -1);
-                    return;
-                }
+                File.WriteAllBytes(Constants.SystemSettingsFile, Encoding.UTF8.GetBytes(Serializer.SerializeJson(ret, true)));
             }
 
             #endregion
@@ -203,11 +170,12 @@ namespace Uscale.Classes
             Console.WriteLine("In this example, a request to either google.com or www.google.com would be");
             Console.WriteLine("distributed to either server1.mydomain.com or server2.mydomain.com.");
             Console.WriteLine("");
-            ret.Name = Common.InputString("What is the name of the site?", "Google", false);
+
+            ret.Name = Inputty.GetString("What is the name of the site?", "Google", false);
             ret.HttpHostNames = InputHostNames(ret.Name);
             ret.Nodes = InputNodes(ret.Name);
-            ret.BalancingScheme = BalancingScheme.RoundRobin;
-            ret.HandlingMode = HandlingMode.Redirect;
+            ret.BalancingScheme = BalancingSchemeEnum.RoundRobin;
+            ret.HandlingMode = HandlingModeEnum.Redirect;
             ret.AcceptInvalidCerts = true;
 
             List<Host> retList = new List<Host>();
@@ -225,7 +193,7 @@ namespace Uscale.Classes
 
             while (true)
             {
-                string curr = Common.InputString("Hostname?", null, true);
+                string curr = Inputty.GetString("Hostname?", null, true);
                 if (!String.IsNullOrEmpty(curr))
                 {
                     if (ret.Contains(curr)) continue;
@@ -256,16 +224,16 @@ namespace Uscale.Classes
             while (true)
             {
                 Node curr = new Node();
-                curr.Hostname = Common.InputString("Hostname?", null, true);
+                curr.Hostname = Inputty.GetString("Hostname?", null, true);
                 if (String.IsNullOrEmpty(curr.Hostname))
                 {
                     if (ret.Count < 1) continue;
                     else break;
                 }
 
-                curr.Port = Common.InputInteger("Port?", 80, true, false);
-                curr.Ssl = Common.InputBoolean("Ssl?", false);
-                curr.HeartbeatUrl = Common.InputString("Heartbeat URL [full URL, i.e. http://host.mydomain.com:80/api/]?", null, false);
+                curr.Port = Inputty.GetInteger("Port?", 80, true, false);
+                curr.Ssl = Inputty.GetBoolean("Ssl?", false);
+                curr.HeartbeatUrl = Inputty.GetString("Heartbeat URL [full URL, i.e. http://host.mydomain.com:80/api/]?", null, false);
                 curr.PollingIntervalMsec = 2500;
                 curr.MaxFailures = 4;
                 ret.Add(curr);

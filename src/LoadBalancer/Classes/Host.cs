@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// Virtual host exposed by the loadbalancer.
     /// </summary>
@@ -16,37 +12,37 @@ namespace Uscale.Classes
         /// <summary>
         /// Name of the host.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = null;
 
         /// <summary>
         /// HTTP hostnames on which the loadbalancer should listen for this host.
         /// </summary>
-        public List<string> HttpHostNames { get; set; }
+        public List<string> HttpHostNames { get; set; } = new List<string>();
 
         /// <summary>
         /// List of Nodes that are able to service requests for this host.
         /// </summary>
-        public List<Node> Nodes { get; set; }
+        public List<Node> Nodes { get; set; } = new List<Node>();
 
         /// <summary>
         /// The last index used when routing a client request.
         /// </summary>
-        public int LastIndex { get; set; }
+        public int LastIndex { get; set; } = 0;
 
         /// <summary>
         /// The balancing scheme used for distributing load.
         /// </summary>
-        public BalancingScheme BalancingScheme { get; set; } // RoundRobin
+        public BalancingSchemeEnum BalancingScheme { get; set; } = BalancingSchemeEnum.RoundRobin;
 
         /// <summary>
         /// How the loadbalancer handles incoming requests and services backend requests to a Node.
         /// </summary>
-        public HandlingMode HandlingMode { get; set; } // Proxy, Redirect
+        public HandlingModeEnum HandlingMode { get; set; } = HandlingModeEnum.Proxy;
 
         /// <summary>
         /// Accept or reject certificates that cannot be validated.
         /// </summary>
-        public bool AcceptInvalidCerts { get; set; }
+        public bool AcceptInvalidCerts { get; set; } = false;
 
         #endregion
 

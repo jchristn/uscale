@@ -1,9 +1,8 @@
-﻿using System;
-using SyslogLogging;
-using WatsonWebserver;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+    using WatsonWebserver.Core;
+
     /// <summary>
     /// Metadata about connection from a client.
     /// </summary>

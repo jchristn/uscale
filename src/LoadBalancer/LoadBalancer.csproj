@@ -1,20 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net461</TargetFrameworks>
+    <TargetFrameworks>net462;net48;net6.0;net7.0;net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>4.0.2</Version>
+    <Version>4.0.3</Version>
     <Authors>Joel Christner</Authors>
     <Company>Joel Christner</Company>
     <Product>uscale Loadbalancer</Product>
     <Description>HTTP loadbalancer in C#</Description>
-    <Copyright>(c)2019 Joel Christner</Copyright>
+    <Copyright>(c)2024 Joel Christner</Copyright>
     <PackageProjectUrl>https://github.com/jchristn/uscale</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jchristn/uscale</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>loadbalancer rest http https load balancer scale scalability high availability</PackageTags>
-    <PackageReleaseNotes>Bugfixes</PackageReleaseNotes>
+    <PackageReleaseNotes>Dependency updates and refresh</PackageReleaseNotes>
     <PackageId>uscale</PackageId>
     <PackageLicenseUrl>https://github.com/jchristn/uscale/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/jchristn/uscale/master/assets/mu.ico</PackageIconUrl>
@@ -23,9 +23,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestWrapper" Version="2.0.2" />
-    <PackageReference Include="SyslogLogging" Version="1.0.10" />
-    <PackageReference Include="Watson" Version="2.0.2" />
+    <PackageReference Include="Inputty" Version="1.0.12" />
+    <PackageReference Include="RestWrapper" Version="3.0.18" />
+    <PackageReference Include="SerializationHelper" Version="1.0.1" />
+    <PackageReference Include="SyslogLogging" Version="2.0.2" />
+    <PackageReference Include="Watson" Version="6.1.6" />
   </ItemGroup>
 
 </Project>

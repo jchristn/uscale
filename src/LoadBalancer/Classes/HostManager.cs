@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SyslogLogging;
-using RestWrapper;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using SyslogLogging;
+    using RestWrapper;
+    using System.Threading;
+
     /// <summary>
     /// Host manager.
     /// </summary>
-    public class HostManager
+    public class HostManager : IDisposable
     {
         #region Public-Members
 
@@ -19,10 +19,13 @@ namespace Uscale.Classes
 
         #region Private-Members
 
-        private Settings _Settings;
-        private LoggingModule _Logging;
-        private List<Host> _Hosts;
-        private readonly object _HostsLock;
+        private string _Header = "[HostManager] ";
+        private Settings _Settings = null;
+        private LoggingModule _Logging = null;
+        private List<Host> _Hosts = new List<Host>();
+        private readonly object _HostsLock = new object();
+
+        private CancellationTokenSource _TokenSource = new CancellationTokenSource();
 
         #endregion
 
@@ -42,14 +45,21 @@ namespace Uscale.Classes
             _Settings = settings;
             _Logging = logging;
             _Hosts = hosts;
-            _HostsLock = new object();
 
-            Task.Run(() => StartMonitorThreads(_Hosts));
+            Task.Run(() => StartMonitorThreads(_Hosts, _TokenSource.Token), _TokenSource.Token);
         }
 
         #endregion
 
         #region Public-Members
+
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        public void Dispose()
+        {
+
+        }
 
         /// <summary>
         /// Retrieve list of hosts.
@@ -59,7 +69,7 @@ namespace Uscale.Classes
         {
             lock (_HostsLock)
             {
-                return _Hosts;
+                return new List<Host>(_Hosts);
             }
         }
 
@@ -72,7 +82,7 @@ namespace Uscale.Classes
         {
             if (String.IsNullOrEmpty(name))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "GetHostByName null host name supplied");
+                _Logging.Warn(_Header + "null host name supplied");
                 return null;
             }
 
@@ -82,7 +92,7 @@ namespace Uscale.Classes
                 if (ret != null && ret != default(Host)) return ret;
             }
 
-            _Logging.Log(LoggingModule.Severity.Warn, "GetHostByName unable to find host with name " + name);
+            _Logging.Warn(_Header + "unable to find host with name " + name);
             return null;
         }
 
@@ -100,7 +110,7 @@ namespace Uscale.Classes
 
             if (String.IsNullOrEmpty(hostName))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "SelectNodeForHost null hostname supplied");
+                _Logging.Warn(_Header + "null hostname supplied");
                 return false;
             }
 
@@ -109,12 +119,12 @@ namespace Uscale.Classes
                 host = _Hosts.FirstOrDefault(i => i.HttpHostNames.Contains(hostName));
                 if (host == null || host == default(Host))
                 {
-                    _Logging.Log(LoggingModule.Severity.Warn, "SelectNodeForHost could not find host with HTTP host name " + hostName);
+                    _Logging.Warn(_Header + "could not find host with HTTP host name " + hostName);
                     return false;
                 }
             }
 
-            if (host.BalancingScheme == BalancingScheme.RoundRobin)
+            if (host.BalancingScheme == BalancingSchemeEnum.RoundRobin)
             {
                 int maxAttempts = host.Nodes.Count * 5;
 
@@ -132,12 +142,12 @@ namespace Uscale.Classes
                     }
                 }
 
-                _Logging.Log(LoggingModule.Severity.Warn, "SelectNodeForHost unable to find active host for " + host.Name);
+                _Logging.Warn(_Header + "unable to find active host for " + host.Name);
                 return false;
             }
             else
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "SelectNodeForHost invalid load-balancing schema: " + host.BalancingScheme.ToString());
+                _Logging.Warn(_Header + "invalid load-balancing schema: " + host.BalancingScheme.ToString());
                 return false;
             } 
         }
@@ -146,11 +156,11 @@ namespace Uscale.Classes
 
         #region Private-Methods
 
-        private void StartMonitorThreads(List<Host> hosts)
+        private async Task StartMonitorThreads(List<Host> hosts, CancellationToken token)
         {
             if (hosts == null || hosts.Count < 1)
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "StartMonitorThreads no hosts supplied");
+                _Logging.Warn(_Header + "no hosts supplied");
                 return;
             }
 
@@ -158,32 +168,32 @@ namespace Uscale.Classes
             {
                 if (currHost.Nodes == null || currHost.Nodes.Count < 1)
                 {
-                    _Logging.Log(LoggingModule.Severity.Warn, "StartMonitorThreads no nodes for host " + currHost.Name);
+                    _Logging.Warn(_Header + "no nodes for host " + currHost.Name);
                     continue;
                 }
 
                 foreach (Node currNode in currHost.Nodes)
                 {
-                    Task.Run(() => MonitorThread(currHost, currNode));
+                    await Task.Run(() => MonitorThread(currHost, currNode, token), token);
                 }
             }
         }
 
-        private void MonitorThread(Host host, Node node)
+        private async Task MonitorThread(Host host, Node node, CancellationToken token)
         {
-            try
-            {
-                _Logging.Log(LoggingModule.Severity.Debug, "MonitorThread starting for host " + host.Name + " node " + node.Hostname);
+            _Logging.Debug(_Header + "starting for host " + host.Name + " node " + node.Hostname);
 
-                bool firstRun = true;
+            bool firstRun = true;
                 
-                while (true)
-                {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                { 
                     #region Sleep
 
                     if (!firstRun)
                     {
-                        Task.Delay(node.PollingIntervalMsec).Wait();
+                        await Task.Delay(node.PollingIntervalMsec);
                     }
                     else
                     {
@@ -194,37 +204,63 @@ namespace Uscale.Classes
 
                     #region Poll
 
-                    _Logging.Log(LoggingModule.Severity.Debug, "MonitorThread querying node " + node.Hostname + ":" + node.Port);
-
-                    RestRequest req = new RestRequest(
-                        node.HeartbeatUrl,
-                        HttpMethod.GET,
-                        null,
-                        null,
-                        true);
-
-                    req.IgnoreCertificateErrors = _Settings.Rest.AcceptInvalidCerts;
-
-                    RestResponse resp = req.Send();
-
-                    if (resp == null || resp.StatusCode != 200)
+                    using (RestRequest req = new RestRequest(node.HeartbeatUrl, System.Net.Http.HttpMethod.Get))
                     {
-                        _Logging.Log(LoggingModule.Severity.Warn, "MonitorThread node " + node.Hostname + ":" + node.Port + " inquiry failed");
-                        AddNodeFailure(host, node);
-                    }
-                    else
-                    {
-                        _Logging.Log(LoggingModule.Severity.Debug, "MonitorThread node " + node.Hostname + ":" + node.Port + " inquiry succeeded");
-                        AddNodeSuccess(host, node);
+                        req.IgnoreCertificateErrors = _Settings.Rest.AcceptInvalidCerts;
+
+                        RestResponse resp = null;
+
+                        try
+                        {
+                            resp = await req.SendAsync(token);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+
+                        if (resp == null)
+                        {
+                            if (node.Debug)
+                                _Logging.Warn(_Header + "unable to connect to node " + node.Hostname + ":" + node.Port);
+
+                            AddNodeFailure(host, node);
+                        }
+                        else if (resp.StatusCode != 200)
+                        {
+                            if (node.Debug)
+                                _Logging.Warn(_Header + "node " + node.Hostname + ":" + node.Port + " inquiry failed");
+
+                            AddNodeFailure(host, node);
+                            resp.Dispose();
+                        }
+                        else
+                        {
+                            if (node.Debug)
+                                _Logging.Debug(_Header + "node " + node.Hostname + ":" + node.Port + " inquiry succeeded");
+
+                            AddNodeSuccess(host, node);
+                            resp.Dispose();
+                        }
                     }
 
                     #endregion
                 }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception e)
+                {
+                    _Logging.Exception(e);
+                }
             }
-            catch (Exception e)
-            {
-                _Logging.LogException("HostManager", "MonitorThread " + node.Hostname, e);
-            }
+
+            _Logging.Debug(_Header + "monitor thread exiting");
         }
 
         private void UpdateHostIndex(Host host, int lastIndex)
@@ -245,7 +281,7 @@ namespace Uscale.Classes
             Host currHost = GetHostByName(host.Name);
             if (currHost == null || currHost == default(Host))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "AddNodeFailure unable to retrieve host with name " + host.Name);
+                _Logging.Warn(_Header + "unable to retrieve host with name " + host.Name);
                 return;
             }
 
@@ -261,19 +297,17 @@ namespace Uscale.Classes
 
             if (currNode == null || currNode == default(Node))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "AddNodeFailure unable to retrieve node with hostname " + currNode.Hostname);
+                _Logging.Warn(_Header + "unable to retrieve node with hostname " + currNode.Hostname);
                 return;
             }
 
-            currNode.LastAttempt = DateTime.Now.ToUniversalTime();
+            currNode.LastAttempt = DateTime.UtcNow.ToUniversalTime();
             currNode.LastFailure = currNode.LastAttempt;
 
-            if (currNode.NumFailures == null) currNode.NumFailures = 1;
-            else currNode.NumFailures = currNode.NumFailures + 1;
-
+            currNode.NumFailures = currNode.NumFailures + 1;
             if (currNode.NumFailures >= currNode.MaxFailures)
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "AddNodeFailure marking node " + currNode.Hostname + ":" + currNode.Port + " failed (" + currNode.NumFailures + " failures, max " + currNode.MaxFailures + ")");
+                _Logging.Warn(_Header + "marking node " + currNode.Hostname + ":" + currNode.Port + " failed (" + currNode.NumFailures + " failures, max " + currNode.MaxFailures + ")");
                 currNode.Failed = true;
             }
             else
@@ -289,7 +323,7 @@ namespace Uscale.Classes
             Host currHost = GetHostByName(host.Name);
             if (currHost == null || currHost == default(Host))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "AddNodeSuccess unable to retrieve host with name " + host.Name);
+                _Logging.Warn(_Header + "unable to retrieve host with name " + host.Name);
                 return;
             }
 
@@ -305,11 +339,11 @@ namespace Uscale.Classes
 
             if (currNode == null || currNode == default(Node))
             {
-                _Logging.Log(LoggingModule.Severity.Warn, "AddNodeSuccess unable to retrieve node with hostname " + currNode.Hostname);
+                _Logging.Warn(_Header + "unable to retrieve node with hostname " + currNode.Hostname);
                 return;
             }
 
-            currNode.LastAttempt = DateTime.Now.ToUniversalTime();
+            currNode.LastAttempt = DateTime.UtcNow.ToUniversalTime();
             currNode.LastSuccess = currNode.LastAttempt;
             currNode.NumFailures = 0;
             currNode.Failed = false;

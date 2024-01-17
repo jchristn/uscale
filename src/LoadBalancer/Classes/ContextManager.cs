@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using SyslogLogging;
-using WatsonWebserver;
-
-namespace Uscale.Classes
+﻿namespace Uscale.Classes
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using SyslogLogging;
+    using WatsonWebserver.Core;
+
     /// <summary>
-    /// Connection manager.
+    /// Context manager.
     /// </summary>
-    public class ConnectionManager
+    public class ContextManager
     {
         #region Public-Members
 
@@ -18,9 +17,10 @@ namespace Uscale.Classes
 
         #region Private-Members
 
-        private LoggingModule _Logging;
-        private List<Connection> _Connections;
-        private readonly object _Lock;
+        private string _Header = "[ContextManager] ";
+        private LoggingModule _Logging = null;
+        private List<Connection> _Connections = new List<Connection>();
+        private readonly object _Lock = new object();
 
         #endregion
 
@@ -30,7 +30,7 @@ namespace Uscale.Classes
         /// Instantiate the object.
         /// </summary>
         /// <param name="logging">LoggingModule instance.</param>
-        public ConnectionManager(LoggingModule logging)
+        public ContextManager(LoggingModule logging)
         {
             if (logging == null) throw new ArgumentNullException(nameof(logging));
 
@@ -47,20 +47,20 @@ namespace Uscale.Classes
         /// Add a connection.
         /// </summary>
         /// <param name="threadId">Thread ID.</param>
-        /// <param name="req">HttpRequest.</param>
-        public void Add(int threadId, HttpRequest req)
+        /// <param name="ctx">HTTP context.</param>
+        public void Add(int threadId, HttpContextBase ctx)
         {
             if (threadId <= 0) return;
-            if (req == null) return;
+            if (ctx == null) return;
 
             Connection conn = new Connection();
             conn.ThreadId = threadId;
-            conn.SourceIp = req.SourceIp;
-            conn.SourcePort = req.SourcePort;
-            conn.Method = req.Method;
-            conn.RawUrl = req.RawUrlWithoutQuery;
-            conn.StartTime = DateTime.Now;
-            conn.EndTime = DateTime.Now;
+            conn.SourceIp = ctx.Request.Source.IpAddress;
+            conn.SourcePort = ctx.Request.Source.Port;
+            conn.Method = ctx.Request.Method;
+            conn.RawUrl = ctx.Request.Url.RawWithoutQuery;
+            conn.StartTime = DateTime.UtcNow;
+            conn.EndTime = DateTime.UtcNow;
 
             lock (_Lock)
             {
@@ -98,7 +98,7 @@ namespace Uscale.Classes
                 Connection curr = _Connections.FirstOrDefault(i => i.ThreadId == threadId);
                 if (curr == null || curr == default(Connection))
                 {
-                    _Logging.Log(LoggingModule.Severity.Warn, "Update unable to find connection on thread ID " + threadId);
+                    _Logging.Warn(_Header + "unable to find connection on thread ID " + threadId);
                     return;
                 }
 
@@ -117,14 +117,10 @@ namespace Uscale.Classes
         /// <returns>List of Connection objects.</returns>
         public List<Connection> GetActiveConnections()
         {
-            List<Connection> curr = new List<Connection>();
-
             lock (_Lock)
             {
-                curr = new List<Connection>(_Connections);
+                return new List<Connection>(_Connections);
             }
-
-            return curr;
         }
 
         #endregion
